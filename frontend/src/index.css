@@ -1,3 +1,8 @@
+@import url("https://fonts.googleapis.com/css2?family=Abitare+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Rubik+Mono+One&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Delius+Swash+Caps&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Aladin&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -61,25 +66,16 @@
   }
 }
 
-@layer components {
-  .chat-message {
-    @apply p-4 rounded-lg max-w-3xl;
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
   
-  .chat-message.user {
-    @apply bg-amber-500/20 text-amber-900 ml-auto;
-  }
-
-  .chat-message.assistant {
-    @apply bg-amber-50/80 text-amber-900 mr-auto;
-  }
-
-  .recommendation-card {
-    @apply bg-amber-50/80 text-amber-900 rounded-lg p-1.5 mb-6;
-  }
-}
-
-@layer utilities {
   .animate-fadeIn {
     animation: fadeIn 0.5s ease-in-out;
   }
@@ -95,8 +91,6 @@
     transform: translateY(0);
   }
 }
-
-
 
 @layer base {
   * {

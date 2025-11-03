@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, MessageCircle, MapPin } from 'lucide-react';
-import ChatInterface from './components/ChatInterface';
+import { MobileSearchView } from './components/MobileSearchView';
 import RegistrationModal from './components/RegistrationModal';
 import LoginModal from './components/LoginModal';
 import { ChatMessage, apiClient } from './api/client';
@@ -11,9 +10,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 
 const App: React.FC = () => {
   const [conversationHistory, setConversationHistory] = useState<ChatMessage[]>([]);
-  const [llmProvider, setLlmProvider] = useState('openai');
-  const [showSettings, setShowSettings] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
+  const [llmProvider] = useState('openai');
   const [userId, setUserIdState] = useState<string>('');
   const [usageStats, setUsageStats] = useState<any>(null);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
@@ -23,17 +20,9 @@ const App: React.FC = () => {
 
   // Firebase authentication state
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-
-  const availableProviders = [
-    { value: 'openai', label: 'OpenAI (GPT-3.5)' },
-    { value: 'anthropic', label: 'Anthropic Claude' },
-    { value: 'ollama', label: 'Ollama (Local)' }
-  ];
+  const [, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    checkConnection();
-
     // Prevent browser scroll restoration on page load
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
@@ -115,15 +104,12 @@ const App: React.FC = () => {
     }
   }, [userId]);
 
-  const checkConnection = async () => {
-    try {
-      await apiClient.healthCheck();
-      setIsConnected(true);
-    } catch (error) {
+  useEffect(() => {
+    // Check connection on mount
+    apiClient.healthCheck().catch(error => {
       console.error('Connection failed:', error);
-      setIsConnected(false);
-    }
-  };
+    });
+  }, []);
 
   const handleNewMessage = (message: ChatMessage) => {
     setConversationHistory(prev => [...prev, message]);
@@ -249,134 +235,14 @@ const App: React.FC = () => {
     }
   };
 
-  const clearConversation = () => {
-    setConversationHistory([]);
+  const onRefresh = () => {
+    // Trigger a refresh by re-initializing conversation or fetching new recommendations
+    // This could be implemented to fetch fresh events
+    console.log('Refresh requested');
   };
 
   return (
-    <div className={`min-h-screen ${trialWarning ? 'pt-20' : ''}`}>
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-amber-600 rounded-lg flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Local Life Assistant</h1>
-                <p className="text-sm text-gray-500">AI-powered recommendations for your city</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {/* Authentication Status */}
-              {authLoading ? (
-                <div className="text-sm text-gray-600">Loading...</div>
-              ) : currentUser ? (
-                <div className="flex items-center gap-3">
-                  <div className="text-sm text-gray-700">
-                    Welcome, {currentUser.displayName || currentUser.email?.split('@')[0] || 'User'}
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="text-sm bg-amber-600/80 text-white px-3 py-1 rounded-md hover:bg-amber-700/80 transition-colors"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  {usageStats && !usageStats.is_registered && (
-                    <div className="text-sm text-gray-600">
-                      Trial: {usageStats.trial_remaining} interactions left
-                    </div>
-                  )}
-                  <button
-                    onClick={() => setShowRegistrationModal(true)}
-                    className="text-sm bg-amber-600 text-white px-3 py-1 rounded-md hover:bg-amber-700 transition-colors"
-                  >
-                    Sign in / Register
-                  </button>
-                </div>
-              )}
-              
-              <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                <span className="text-sm text-gray-600">
-                  {isConnected ? 'Connected' : 'Disconnected'}
-                </span>
-              </div>
-              
-              <button
-                onClick={() => setShowSettings(!showSettings)}
-                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Settings Panel */}
-      {showSettings && (
-        <div className="bg-white shadow-sm p-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  LLM Provider
-                </label>
-                <select
-                  value={llmProvider}
-                  onChange={(e) => setLlmProvider(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                >
-                  {availableProviders.map(provider => (
-                    <option key={provider.value} value={provider.value}>
-                      {provider.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="flex items-end">
-                <button
-                  onClick={clearConversation}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  Clear Conversation
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Chat Interface */}
-        <div className="bg-white rounded-lg shadow-sm h-[700px] flex flex-col">
-          <div className="p-4 bg-gray-50/50">
-            <div className="flex items-center space-x-2">
-              <MessageCircle className="w-5 h-5 text-amber-600" />
-              <h2 className="text-lg font-semibold text-gray-900">Chat with Assistant</h2>
-            </div>
-          </div>
-          
-          <ChatInterface
-            onNewMessage={handleNewMessage}
-            onRecommendations={handleRecommendations}
-            llmProvider={llmProvider}
-            conversationHistory={conversationHistory}
-            userId={userId}
-            onTrialExceeded={() => setShowRegistrationModal(true)}
-            conversationId={currentConversationId}
-          />
-        </div>
-      </div>
-
-
+    <div className={`min-h-screen bg-[#FCFBF9] ${trialWarning ? 'pt-20' : ''}`}>
       {/* Trial Warning Banner */}
       {trialWarning && (
         <div className="fixed top-0 left-0 right-0 bg-amber-50 border-l-4 border-amber-500 p-4 z-40">
@@ -386,20 +252,36 @@ const App: React.FC = () => {
         </div>
       )}
 
-              {/* Registration Modal */}
-              <RegistrationModal
-                isOpen={showRegistrationModal}
-                onClose={() => setShowRegistrationModal(false)}
-                onRegister={handleRegister}
-                trialRemaining={usageStats?.trial_remaining || 0}
-              />
+      <MobileSearchView
+        conversationHistory={conversationHistory}
+        llmProvider={llmProvider}
+        userId={userId}
+        conversationId={currentConversationId}
+        currentUser={currentUser}
+        usageStats={usageStats}
+        onNewMessage={handleNewMessage}
+        onRecommendations={handleRecommendations}
+        onTrialExceeded={() => setShowRegistrationModal(true)}
+        onRegister={() => setShowRegistrationModal(true)}
+        onLogin={() => setShowLoginModal(true)}
+        onLogout={handleLogout}
+        onRefresh={onRefresh}
+      />
 
-              {/* Login Modal */}
-              <LoginModal
-                isOpen={showLoginModal}
-                onClose={() => setShowLoginModal(false)}
-                onLogin={handleLogin}
-              />
+      {/* Registration Modal */}
+      <RegistrationModal
+        isOpen={showRegistrationModal}
+        onClose={() => setShowRegistrationModal(false)}
+        onRegister={handleRegister}
+        trialRemaining={usageStats?.trial_remaining || 0}
+      />
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLogin={handleLogin}
+      />
     </div>
   );
 };
